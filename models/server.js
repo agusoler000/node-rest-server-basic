@@ -1,12 +1,14 @@
 const express = require('express');
 const cors = require('cors');
+const { dbConection } = require('../database/config.db');
 
 class Server {
   constructor() {
     this.app = express();
     this.port = process.env.PORT;
     this.usersPath = '/api/users';
-
+    //DDBB Conection
+    this.dataBaseConection();
     // Middlewares--
     this.middlewares();
     // Routes of the app
@@ -33,6 +35,10 @@ class Server {
     this.app.listen(this.port, () => {
       console.log('Corriendo en', this.port);
     });
+  }
+
+  async dataBaseConection() {
+    await dbConection();
   }
 }
 

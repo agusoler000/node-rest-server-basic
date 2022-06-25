@@ -1,22 +1,61 @@
 const { response, request } = require('express');
+const bcrypt = require('bcryptjs');
 const { post } = require('../routes/user.routes');
+const User = require('../models/user');
 
-const userGet = (req = request, res = response) => {
-  const query = req.query;
-  res.json({ msg: 'method get -controller', query });
+const userGet = async (req = request, res = response) => {
+  const { limit = 5, from = 0 } = req.query;
+
+  const query = { state: true };
+
+  // const users = await User.find(query).skip(Number(from)).limit(limit);
+
+  // const total = await User.countDocuments(query);
+
+  const [total, users] = await Promise.all([
+    User.countDocuments(query),
+    User.find(query).skip(Number(from)).limit(limit),
+  ]);
+
+  res.json({ total, users });
 };
 
-const userPost = (req, res = response) => {
-  const { nombre, edad } = req.body;
+const userPost = async (req, res = response) => {
+  const { name, email, password, role } = req.body;
 
-  res.json({ msg: 'method Post-controller', nombre, edad });
+  const user = new User({ name, email, password, role });
+
+  //Encript the  password
+  const salt = bcrypt.genSaltSync(10);
+  user.password = bcrypt.hashSync(password, salt);
+
+  //Saving the new User
+  await user.save();
+  res.json({ user });
 };
-const userPut = (req, res = response) => {
+const userPut = async (req, res = response) => {
   const { id } = req.params;
-  res.json({ msg: 'method Put-controller', id });
+  const { _id, password, google, email, ...rest } = req.body;
+
+  // TODO Validation agst ddbbs
+  if (password) {
+    const salt = bcrypt.genSaltSync(10);
+    rest.password = bcrypt.hashSync(password, salt);
+  }
+
+  const userDb = await User.findByIdAndUpdate(id, rest);
+
+  res.json({ userDb });
 };
-const userDelete = (req, res = response) => {
-  res.json({ msg: 'method Delete-controller' });
+const userDelete = async (req, res = response) => {
+  const { id } = req.params;
+  /** Delete from ddbb
+   *  const user = await User.findByIdAndDelete(id);
+   *
+   * */
+  // change flag state
+  const user = await User.findByIdAndUpdate(id, { state: false });
+  res.json({ user });
 };
 const userPatch = (req, res = response) => {
   res.json({ msg: 'method  Patch-controller' });
