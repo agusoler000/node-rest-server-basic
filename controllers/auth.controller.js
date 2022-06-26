@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const { use } = require('../routes/auth.routes');
 const { generateJWT } = require('../helpers/generate-jwt');
+const { googleVerify } = require('../helpers/google-verify');
 
 const login = async (req, res = response) => {
   try {
@@ -49,6 +50,48 @@ const login = async (req, res = response) => {
   }
 };
 
+const googleSignIn = async (req, res = response) => {
+  try {
+    const { id_token } = req.body;
+    const { name, img, email } = await googleVerify(id_token);
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      const data = {
+        email,
+        name,
+        password: 'googlepasswordauthentication',
+        img,
+        role: 'REGULARUSER',
+        google: true,
+      };
+
+      user = new User(data);
+      await user.save();
+    }
+
+    if (!user.state) {
+      res.status(401).json({
+        msg: 'User blocked. Constact the administrator',
+      });
+    }
+    // generate JWT
+    const token = await generateJWT(user.id);
+
+    res.json({
+      user,
+      token,
+    });
+  } catch (error) {
+    res.status(400).json({
+      msg: 'Error google signIn',
+      error,
+    });
+  }
+};
+
 module.exports = {
   login,
+  googleSignIn,
 };
