@@ -53,6 +53,7 @@ const userDelete = async (req, res = response) => {
    *  const user = await User.findByIdAndDelete(id);
    *
    * */
+
   // change flag state
   const user = await User.findByIdAndUpdate(id, { state: false });
   res.json({ user });
