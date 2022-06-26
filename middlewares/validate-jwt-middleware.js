@@ -6,7 +6,7 @@ const validateJWT = async (req = request, res = response, next) => {
   const token = req.header('x-token');
 
   if (!token) {
-    res.status(401).json({
+    return res.status(401).json({
       msg: 'There is not authorization header',
     });
   }
@@ -29,7 +29,7 @@ const validateJWT = async (req = request, res = response, next) => {
     next();
   } catch (error) {
     console.log(error);
-    res.status(401).json({
+    return res.status(401).json({
       msg: 'The token is not valid',
     });
   }
